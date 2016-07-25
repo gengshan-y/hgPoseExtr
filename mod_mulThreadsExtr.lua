@@ -4,7 +4,7 @@
  - Last Edited by:  Gengshan Yang
  - Description:     Usage: 
                     th mod_mulThreadsExtr current_pointer batch_size num_iter
-                                         outfile_name GPU_offset
+                                          outfile_name GPU_offset
  --]]
 
 local threads = require 'threads'
@@ -43,8 +43,9 @@ local pool = threads.Threads(
     end,
     function(threadid)
         -- get data
-        detList = readDectionList(inputFilePath, nil, false)
-
+        detList = readDectionList(inputFilePath, {tonumber(args[1]),
+                                                 args[2] * args[3]},
+                                  false)
         -- open output file
         os.execute('rm ' .. outputFilePath)
         outFile = hdf5.open(outputFilePath, 'a')
@@ -68,6 +69,7 @@ local pool = threads.Threads(
 
         -- other vars visible to thread, to avoid garbage
         currPointerLoc = 1
+        begLoc = tonumber(args[1])  -- to recover indexing for getBatch()
         timer1 = torch.Timer()  -- for timing in this file
         timer2 = torch.Timer()  -- for timing in Util file
         locLap = torch.FloatTensor(10)  -- syncronize with global lap
@@ -105,7 +107,7 @@ for it = 1, args[3] do
 
             -- collect garbage --
             timer1:reset()
-            if it % 10 then
+            if it % 100 then
                 collectgarbage()
                 collectgarbage()
             end

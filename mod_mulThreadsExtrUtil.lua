@@ -22,20 +22,19 @@ function shuffle(t)
 end
 
 --[[ read line-by-line data to a table, and save total number ]]--
-function readDectionList(path, num2Load, ifShuffle)
-    num2Load = num2Load or 3000000  -- or load all
+function readDectionList(path, range2Load, ifShuffle)
+    range2Load = range2Load or {1, 3000000}  -- if nil then or load all
     local lines = {}
     local file = io.open(path)
-    local it = 0
+    local it = 1
     for line in file:lines() do
-        if it >= num2Load then
-            break
+        if it >= range2Load[1] and it < range2Load[1] + range2Load[2] then
+            table.insert(lines, line)
         end
         it = it + 1
-        table.insert(lines, line)
     end
     file:close()
-    print(it .. ' entries loaded')
+    print(range2Load[2] .. ' entries loaded')
 
     if ifShuffle then
         shuffle(lines)
@@ -50,7 +49,7 @@ function getBatch(batch_size)
         it_mod = (it-1) % batch_size + 1  -- to avoid 0 index
 
         -- get a table of results --
-        detRes = strSplit(detList[it], "\t")
+        detRes = strSplit(detList[it - begLoc + 1], "\t")  -- to subtract offset
 
         -- get center
         centerList[it_mod] = {detRes[3], detRes[4]}
