@@ -1,4 +1,4 @@
 # hgPoseExtr
 Modified hourglass. Extract pose estimations.
 
-Usage: th mod_mulThreadsExtr current_pointer outfile_name batch_size GPU_offset
+Usage: th mod_mulThreadsExtr current_pointer batch_size num_iter outfile_name GPU_offset
