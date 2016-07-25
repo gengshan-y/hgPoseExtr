@@ -3,15 +3,12 @@
  - Date:            Jul 25 2016
  - Last Edited by:  Gengshan Yang
  - Description:     Usage: 
-                    th mod_mulThreadsExtr current_pointer batch_size num_iter
-                                          outfile_name GPU_offset
  --]]
 
 local threads = require 'threads'
 threads.Threads.serialization('threads.sharedserialize')  -- so that can change global values
-local nter = 287600 * 2 -- 2876828 -> 10
-local ngpu = 2
 local args = arg  -- to pass into threads
+local ngpu = tonumber(args[5])
 local currPointer = torch.IntTensor(1): -- point to current data
                     fill(tonumber(args[1]))  -- tensor is sharable
 local lap = torch.FloatTensor(10):fill(0)  -- to record the time lapse
@@ -51,8 +48,8 @@ local pool = threads.Threads(
         outFile = hdf5.open(outputFilePath, 'a')
  
         -- init models
-        cutorch.setDevice(threadid + args[5])
-        print('dev=' .. threadid + args[5])
+        cutorch.setDevice(threadid + args[6])
+        print('dev=' .. threadid + args[6])
         m = torch.load(modelPath)
         
         -- init input buffer
