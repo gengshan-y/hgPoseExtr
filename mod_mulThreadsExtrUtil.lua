@@ -32,7 +32,7 @@ function readDectionList(path, num2Load, ifShuffle)
             break
         end
         it = it + 1
-        table.insert(lines, line)
+        table.insert(lines, strSplit(line, "\t"))
     end
     file:close()
     print(it .. ' entries loaded')
@@ -41,88 +41,67 @@ function readDectionList(path, num2Load, ifShuffle)
         shuffle(lines)
     end
 
-    -- lines['imgNum'] = it
-
     return lines
 end
 
 --[[ get a batch of data ]]--
 function getBatch(batch_size)
     for it = currPointerLoc, currPointerLoc + batch_size - 1 do
-        local it_mod = (it-1) % batch_size + 1  -- to avoid 0 index
-
-        -- get detection result --
-        local detRes = strSplit(detList[it], "\t")
+        it_mod = (it-1) % batch_size + 1  -- to avoid 0 index
 
         -- get center
-        local center = {}
-        table.insert(center, detRes[3])
-        table.insert(center, detRes[4])
-        centerList[it_mod] = center
+        centerList[it_mod] = {detList[it][3], detList[it][4]}
 
         -- get scale
-        local scale = detRes[5]
-        scaleList[it_mod] = scale
+        scaleList[it_mod] = detList[it][5]
 
         -- resize img
-        local img = detRes[1]
-        imgList[it_mod] = img
+        imgList[it_mod] = detList[it][1]
 
-        timer3 = torch.Timer()
-        inpCPU[{{it_mod}, {}, {}, {}}] = crop(image.load(img, 3, 'byte'),
-                                              center, scale, 0, 256)
-        locLap[3] = locLap[3] + timer3:time().real
+        timer2:reset()
+        inpCPU[{{it_mod}, {}, {}, {}}] = crop(image.load(imgList[it_mod], 3, 'byte'),
+                                 centerList[it_mod], scaleList[it_mod], 0, 256)
+        locLap[3] = locLap[3] + timer2:time().real
     end
-    timer3 = torch.Timer()
+
+    timer2:reset()
     inpGPU:copy(inpCPU)
-    locLap[4] = locLap[4] + timer3:time().real
+    locLap[4] = locLap[4] + timer2:time().real
 end
 
 --[[ Get predicts for the data loaded ]]--
 function getPred(batch_size)
-    timer3 = torch.Timer()
+    batch_size = batch_size or batchSize  -- default param is batchSize
+
+    timer2:reset()
     inpGPU:mul(1./255)
-    locLap[5] = locLap[5] + timer3:time().real
+    locLap[5] = locLap[5] + timer2:time().real
 
-    timer3 = torch.Timer()
-    local out = m:forward(inpGPU)
-    locLap[6] = locLap[6] + timer3:time().real
+    timer2:reset()
+    outGPU = m:forward(inpGPU)[2]
+    locLap[6] = locLap[6] + timer2:time().real
 
-    timer3 = torch.Timer()
-    hmCPU:copy(out[2])
-    locLap[7] = locLap[7] + timer3:time().real
+    timer2:reset()
+    hmCPU:copy(outGPU)
+    locLap[7] = locLap[7] + timer2:time().real
 
-    timer3 = torch.Timer()
+    timer2:reset()
     hmCPU[hmCPU:lt(0)] = 0
-    locLap[8] = locLap[8] + timer3:time().real
-    -- cutorch.synchronize()
+    locLap[8] = locLap[8] + timer2:time().real
 
-    timer3 = torch.Timer()
+    timer2:reset()
     for it = 1, batch_size do
         -- get predicted joints positions in cropped and original imgs --
         preds_hm[it],_ = getPreds(hmCPU[it], centerList[it], scaleList[it])
     end
-    locLap[9] = locLap[9] + timer3:time().real
+    locLap[9] = locLap[9] + timer2:time().real
 end
 
 function dumpResult(batch_size)
+    batch_size = batch_size or batchSize  -- default param is batchSize
     for it = 1, batch_size do
         outFile:write(string.sub(imgList[it], 21, -5), preds_hm[it])
     end
-end
-
-function evalBatch(batch_size)
-    batch_size = batch_size or batchSize  -- default param is batchSize
-
-    timer2 = torch.Timer()
-    getBatch(batch_size)
-    locLap[1] = locLap[1] + timer2:time().real
-   
-    timer2 = torch.Timer()     
-    getPred(batch_size)
-    locLap[2] = locLap[2] + timer2:time().real
-
-    dumpResult(batch_size)
 end
 
 function getPreds(hms, center, scale)

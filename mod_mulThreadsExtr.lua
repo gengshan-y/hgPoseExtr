@@ -57,6 +57,7 @@ local pool = threads.Threads(
         inpCPU = torch.FloatTensor():resize(batchSize, 3, 256, 256)
         
         -- init output buffer
+        outGPU = torch.CudaTensor():resize(batchSize, 16, 64, 64)
         hmCPU = torch.FloatTensor():resize(batchSize, 16, 64, 64)
         preds_hm = {}
 
@@ -65,6 +66,7 @@ local pool = threads.Threads(
         timer1 = torch.Timer()  -- for timing in this file
         timer2 = torch.Timer()  -- for timing in Util file
         locLap = torch.FloatTensor(10)  -- syncronize with global lap
+        it_mod = 0  -- number in getBatch for counting
     end
 )
 
