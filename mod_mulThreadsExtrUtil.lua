@@ -32,7 +32,7 @@ function readDectionList(path, num2Load, ifShuffle)
             break
         end
         it = it + 1
-        table.insert(lines, strSplit(line, "\t"))
+        table.insert(lines, line)
     end
     file:close()
     print(it .. ' entries loaded')
@@ -49,14 +49,17 @@ function getBatch(batch_size)
     for it = currPointerLoc, currPointerLoc + batch_size - 1 do
         it_mod = (it-1) % batch_size + 1  -- to avoid 0 index
 
+        -- get a table of results --
+        detRes = strSplit(detList[it], "\t")
+
         -- get center
-        centerList[it_mod] = {detList[it][3], detList[it][4]}
+        centerList[it_mod] = {detRes[3], detRes[4]}
 
         -- get scale
-        scaleList[it_mod] = detList[it][5]
+        scaleList[it_mod] = detRes[5]
 
         -- resize img
-        imgList[it_mod] = detList[it][1]
+        imgList[it_mod] = detRes[1]
 
         timer2:reset()
         inpCPU[{{it_mod}, {}, {}, {}}] = crop(image.load(imgList[it_mod], 3, 'byte'),

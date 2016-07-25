@@ -2,21 +2,24 @@
  - Filename:        mod_mulThreadsExtr.lua
  - Date:            Jul 25 2016
  - Last Edited by:  Gengshan Yang
- - Description:     mod_mulThreadsExtr current_pointer outfile_name batch_size
-                                       GPU_offset
+ - Description:     Usage: 
+                    th mod_mulThreadsExtr current_pointer batch_size num_iter
+                                         outfile_name GPU_offset
  --]]
 
 local threads = require 'threads'
 threads.Threads.serialization('threads.sharedserialize')  -- so that can change global values
 local nter = 287600 * 2 -- 2876828 -> 10
 local ngpu = 2
+local args = arg  -- to pass into threads
 local currPointer = torch.IntTensor(1): -- point to current data
-                    fill(tonumber(arg[1]))  -- tensor is sharable
+                    fill(tonumber(args[1]))  -- tensor is sharable
 local lap = torch.FloatTensor(10):fill(0)  -- to record the time lapse
 
 local pool = threads.Threads(
     ngpu,
-    function(thresdid)
+    function(threadid)
+        print('starting a new thread# ' .. threadid)
         -- necessary dl modules --
         require 'nn'
         require 'nngraph'
@@ -29,24 +32,26 @@ local pool = threads.Threads(
         require 'hdf5'
 
         -- paths --
+        batchSize = args[2]
+        print('batchSize=' .. batchSize)
         modelPath = 'umich-stacked-hourglass.t7'
         inputFilePath = '/home/gengshan/workJul/darknet/results/'..
                         'comp4_det_test_person.txt'
         outputFilePath = '/data/gengshan/pose/' ..
-                         arg[2] .. thresdid ..'.h5'
-        batchSize = arg[3]
+                         args[4] .. threadid ..'.h5'
+        print('outfile=' .. outputFilePath)
     end,
     function(threadid)
-        print('starting a new thread# ' .. threadid)
         -- get data
-        detList = readDectionList(inputFilePath, false)
+        detList = readDectionList(inputFilePath, nil, false)
 
         -- open output file
         os.execute('rm ' .. outputFilePath)
         outFile = hdf5.open(outputFilePath, 'a')
  
         -- init models
-        cutorch.setDevice(threadid + arg[4])
+        cutorch.setDevice(threadid + args[5])
+        print('dev=' .. threadid + args[5])
         m = torch.load(modelPath)
         
         -- init input buffer
@@ -66,6 +71,7 @@ local pool = threads.Threads(
         timer1 = torch.Timer()  -- for timing in this file
         timer2 = torch.Timer()  -- for timing in Util file
         locLap = torch.FloatTensor(10)  -- syncronize with global lap
+        detRes = {}  -- to store detection results
         it_mod = 0  -- number in getBatch for counting
     end
 )
@@ -74,7 +80,8 @@ collectgarbage()
 collectgarbage()
 local jobdone = 0
 local beg = tonumber(os.date"%s")
-for it = 1, 100000 do
+print('jobs= ' .. args[3])
+for it = 1, args[3] do
     pool:addjob(
         function()
             currPointerLoc = currPointer[1]  -- so that funcs in another file can see
@@ -130,9 +137,12 @@ pool:synchronize()
 
 print(string.format("%d jobs done", jobdone))
 
-print('main model: ' .. lap[{{1, 2}}])
-print('submodels of model 1: ' .. lap[{{3, 4}}])
-print('submodels of model 2: ' .. lap[{{5, 9}}])
+print('main model:')
+print(lap[{{1, 2}}])
+print('submodels of model 1:')
+print(lap[{{3, 4}}])
+print('submodels of model 2:')
+print(lap[{{5, 9}}])
 
 collectgarbage()
 collectgarbage()
