@@ -62,6 +62,9 @@ local pool = threads.Threads(
 
         -- other vars visible to thread, to avoid garbage
         currPointerLoc = 1
+        timer1 = torch.Timer()  -- for timing in this file
+        timer2 = torch.Timer()  -- for timing in Util file
+        locLap = torch.FloatTensor(10)  -- syncronize with global lap
     end
 )
 
@@ -76,21 +79,25 @@ for it = 1, 100000 do
             currPointer:add(batchSize)
             print('thread ' .. __threadid .. '. currPointer ' .. currPointerLoc ..
                   ' time ' .. tonumber(os.date"%s") - beg .. 's')
+            locLap:fill(0)
 
-            locLap = torch.FloatTensor(10):fill(0)
-
-            timer2 = torch.Timer()
+            -- Get a batch of eval data --
+            timer1:reset()
             getBatch(batchSize)
-            locLap[1] = locLap[1] + timer2:time().real
+            locLap[1] = locLap[1] + timer1:time().real
 
-            timer2 = torch.Timer()
-            getPred(batch_size)
-            locLap[2] = locLap[2] + timer2:time().real
+            -- Get pose estimation --
+            timer1:reset()
+            getPred(batchSize)
+            locLap[2] = locLap[2] + timer1:time().real
 
-            dumpResult(batch_size)
+            -- Dump results to .h5 file -- 
+            dumpResult(batchSize)
 
-            timer1 = torch.Timer()
-            if it % 5 then
+            -- collect garbage --
+            timer1:reset()
+            if it % 10 then
+                collectgarbage()
                 collectgarbage()
             end
             locLap[10] = locLap[10] + timer1:time().real
@@ -100,7 +107,6 @@ for it = 1, 100000 do
 
         function(id)
             -- print(string.format("task %d finished (ran on thread ID %x)", i, id))
-            -- Clean garbage and close h5 files -- 
             jobdone = jobdone + 1
         end
     )
@@ -122,9 +128,9 @@ pool:synchronize()
 
 print(string.format("%d jobs done", jobdone))
 
-print(lap[{{1, 2}}])
-print(lap[{{3, 4}}])
-print(lap[{{5, 9}}])
+print('main model: ' .. lap[{{1, 2}}])
+print('submodels of model 1: ' .. lap[{{3, 4}}])
+print('submodels of model 2: ' .. lap[{{5, 9}}])
 
 collectgarbage()
 collectgarbage()
