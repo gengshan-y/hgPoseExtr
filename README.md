@@ -6,3 +6,4 @@ Usage: th mod_mulThreadsExtr current_pointer batch_size num_iter outfile_name GP
 e.g.:  th mod_mulThreadsExtr.lua 101 5 100 test 4 0
 
 ## Notes
+run 500k imgs, memory exceeds 12%
