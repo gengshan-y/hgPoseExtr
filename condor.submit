@@ -1,7 +1,7 @@
 Universe = vanilla
 Executable = condorRunPy.sh
-Arguments = "'python /home/gengshan/workJul/hgPoseExtr/imgCrop.py 100000 $(Process)'"
+Arguments = "'python /home/gengshan/workJul/hgPoseExtr/imgCrop.py 10000 $(Process)'"
 output = condor/imgCrop.$(Process).out
 error = $(output).err
 log = condor/imgCrop.log
-queue 29
+queue 290

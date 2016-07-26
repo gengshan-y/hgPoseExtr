@@ -1,17 +1,17 @@
-.ipynb_checkpoints/
-*.t7
-*.pyc
-*.ipynb
-*.png
-tmp/
-condor/
-
 # temp output
 out
 err
+tmp/
+condor/
 
 # experiment codes
 img.lua
 util.lua
-poseFeatExtr-yolo.ipynb
 poseExtrUtil.lua
+*.ipynb
+
+# others
+.ipynb_checkpoints/
+*.t7
+*.pyc
+*.png
