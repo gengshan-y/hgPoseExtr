@@ -1,71 +1,39 @@
-import numpy as np
-import math
 import scipy.misc as imLib
+from imgCropTool import *
+import string
+import os
+import sys
 
-def crop(img, center, scale, res):
-    oriWd, oriHt, oriChan = img.shape
-    
-    ''' new image range in original img coordinate '''
-    tmpSize = scale *200
-    newUl = [math.floor(center[0] - tmpSize/2), math.floor(center[1] - tmpSize/2)]
-    newBr = [math.floor(center[0] + tmpSize/2), math.floor(center[1] + tmpSize/2)]
-    
-    ''' original image range in new img coordinate '''
-    oriUl = np.multiply(newUl, -1)
-    oriBr = [oriWd - newBr[0] + tmpSize, oriHt - newBr[1] + tmpSize]
+batchSize = int(sys.argv[1])
+jobID = int(sys.argv[2]) + 1
 
-    '''
-    print('before:')
-    print('original coordinate:')
-    print('upper left x = ' + str(ul[0]) + ' upper left y = ' + str(ul[1]))
-    print('bottom right x = ' + str(br[0]) + ' bottom right y = ' + str(br[1]))
-    print('new coordinate:')
-    print('upper left x = ' + str(loc_ul[0]) + ' upper left y = ' + str(loc_ul[1]))
-    print('bottom right x = ' + str(loc_br[0]) + ' bottom right y = ' + str(loc_br[1]))
-    '''
+with open('/home/gengshan/workJul/darknet/results/comp4_det_test_person.txt', 'r') as f:
+    wholeDict = f.readlines()
+
+for it, oriDict in enumerate(wholeDict):
+    if it < batchSize * (jobID-1):
+        continue
+    if it >= batchSize * jobID:
+        break
     
-    ''' generate black new image '''
-    newDim = [newBr[0] - newUl[0], newBr[1] - newUl[1], img.shape[2]]
-    newImg = np.zeros(newDim)
+    oriDict = oriDict.split('\t')
+    # print information to stderr
+    eprint(str(it) + ' ' + oriDict[1] + ' ' + oriDict[0] + ' ' + 'tmp/test_' \
+           + oriDict[0].split('/')[-1])
+        
+    ''' Get image parameters '''
+    img = imLib.imread(oriDict[0])
+    wd = float(oriDict[2])
+    ht = float(oriDict[3])
+    scale = float(oriDict[4])
+
+    ''' Crop image '''
+    newImg = crop(img ,[wd, ht], scale, 256)  # width, height
     
-    ''' crop area of new image beging filled if exceed orignal image range '''
-    if oriUl[0] < 0:
-        oirUl[0] = 0
-        
-    if oriUl[1] < 0:
-        oriUl[1] = 0
-        
-    if oriBr[0] > newDim[0]:
-        oriBr[0] = newDim[0]
-        
-    if oriBr[1] > newDim[1]:
-        oriBr[1] = newDim[1]
-        
-    ''' crop area of original image to fill in if exceed new image range  '''
-    if newUl[0] < 0:
-        newUl[0] = 0
-        
-    if newUl[1] < 0:
-        newUl[1] = 0
-        
-    if newBr[0] > oriWd:
-        newBr[0] = oriWd
-        
-    if newBr[1] > oriHt:
-        newBr[1] = oriHt
+    ''' Generate new path '''
+    newPath = string.replace(oriDict[0], 'tmp', 'poseTmp')
+    if not os.path.isdir(string.replace(newPath, oriDict[0].split('/')[-1], '')):
+        os.makedirs(string.replace(newPath, oriDict[0].split('/')[-1], ''))
     
-    '''    
-    print('after:')
-    print('original coordinate:')
-    print('upper left x = ' + str(ul[0]) + ' upper left y = ' + str(ul[1]))
-    print('bottom right x = ' + str(br[0]) + ' bottom right y = ' + str(br[1]))
-    print('new coordinate:')
-    print('upper left x = ' + str(loc_ul[0]) + ' upper left y = ' + str(loc_ul[1]))
-    print('bottom right x = ' + str(loc_br[0]) + ' bottom right y = ' + str(loc_br[1]))
-    '''
-    
-    newImg[oriUl[0] : oriBr[0], oriUl[1] : oriBr[1]] = img[newUl[0] : newBr[0],
-                                                           newUl[1] : newBr[1]]
-    newImg = imLib.imresize(newImg, (res, res, 3))
-    
-    return newImg
+    ''' Save image '''
+    imLib.imsave(newPath, newImg)
