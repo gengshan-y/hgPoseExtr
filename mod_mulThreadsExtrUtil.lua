@@ -58,11 +58,10 @@ function getBatch(batch_size)
         scaleList[it_mod] = detRes[5]
 
         -- resize img
-        imgList[it_mod] = detRes[1]
+        imgList[it_mod] = detRes[1]:gsub("tmp", "poseTmp")  -- separated version
 
         timer2:reset()
-        inpCPU[{{it_mod}, {}, {}, {}}] = crop(image.load(imgList[it_mod], 3, 'byte'),
-                                 centerList[it_mod], scaleList[it_mod], 0, 256)
+        inpCPU[{{it_mod}, {}, {}, {}}] = image.load(imgList[it_mod], 3, 'byte')
         locLap[3] = locLap[3] + timer2:time().real
     end
 
@@ -102,7 +101,7 @@ end
 function dumpResult(batch_size)
     batch_size = batch_size or batchSize  -- default param is batchSize
     for it = 1, batch_size do
-        outFile:write(string.sub(imgList[it], 21, -5), preds_hm[it])
+        outFile:write(string.sub(imgList[it], 24, -5), preds_hm[it])
     end
 end
 
