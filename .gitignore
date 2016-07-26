@@ -4,5 +4,13 @@
 *.png
 tmp/
 condor/
+
+# temp output
 out
 err
+
+# experiment codes
+img.lua
+util.lua
+poseFeatExtr-yolo.ipynb
+poseExtrUtil.lua
