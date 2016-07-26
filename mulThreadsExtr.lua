@@ -2,7 +2,8 @@
  - Filename:        mod_mulThreadsExtr.lua
  - Date:            Jul 25 2016
  - Last Edited by:  Gengshan Yang
- - Description:     Usage: 
+ - Description:     Main file for extracting pose features for a list of
+ -                  perison detection results
  --]]
 
 local threads = require 'threads'

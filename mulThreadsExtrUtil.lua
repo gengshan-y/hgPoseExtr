@@ -1,6 +1,4 @@
 require 'image'
-require 'paths'
-paths.dofile('img.lua')
 
 --[[ split a string to a sequential table on sep ]]--
 function strSplit(str, sep)
