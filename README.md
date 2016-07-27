@@ -15,4 +15,10 @@ e.g.:  th mulThreadsExtr.lua 101 5 100 test 4 0
 
 ## Notes
 Cpu machines crop the images, and GPU machines run neural networks.
+
+### Garbage collection
+Garbage-free. Constant usage of 1% memory.
+
+### Speed
 25fps on Tesla 40
+??fps on Titan x
