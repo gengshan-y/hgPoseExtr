@@ -1,7 +1,9 @@
+## to avoid blade overloading, use 30k * 97, will roughly take 1h
+
 Universe = vanilla
 Executable = condorRunPy.sh
-Arguments = "'python /home/gengshan/workJul/hgPoseExtr/imgCrop.py 10000 $(Process)'"
+Arguments = "'python /home/gengshan/workJul/hgPoseExtr/imgCrop.py 30000 $(Process)'"
 output = condor/imgCrop.$(Process).out
 error = $(output).err
 log = condor/imgCrop.log
-queue 290
+queue 97

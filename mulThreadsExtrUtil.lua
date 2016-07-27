@@ -104,6 +104,8 @@ function dumpResult(batch_size)
 end
 
 function getPreds(hms, center, scale)
+    -- This function is from original hourglass repo 
+    -- https://github.com/anewell/pose-hg-demo
     if hms:size():size() == 3 then hms = hms:view(1, hms:size(1), hms:size(2), hms:size(3)) end
 
     -- Get locations of maximum activations
@@ -121,4 +123,65 @@ function getPreds(hms, center, scale)
     end
 
     return preds, preds_tf
+end
+
+-------------------------------------------------------------------------------
+-- Coordinate transformation
+-------------------------------------------------------------------------------
+
+
+function getTransform(center, scale, rot, res)
+    -- This function is from original hourglass repo 
+    -- https://github.com/anewell/pose-hg-demo
+    local h = 200 * scale
+    local t = torch.eye(3)
+
+    -- Scaling
+    t[1][1] = res / h
+    t[2][2] = res / h
+
+    -- Translation
+    t[1][3] = res * (-center[1] / h + .5)
+    t[2][3] = res * (-center[2] / h + .5)
+
+    -- Rotation
+    if rot ~= 0 then
+        rot = -rot
+        local r = torch.eye(3)
+        local ang = rot * math.pi / 180
+        local s = math.sin(ang)
+        local c = math.cos(ang)
+        r[1][1] = c
+        r[1][2] = -s
+        r[2][1] = s
+        r[2][2] = c
+        -- Need to make sure rotation is around center
+        local t_ = torch.eye(3)
+        t_[1][3] = -res/2
+        t_[2][3] = -res/2
+        local t_inv = torch.eye(3)
+        t_inv[1][3] = res/2
+        t_inv[2][3] = res/2
+        t = t_inv * r * t_ * t
+    end
+
+    return t
+end
+
+
+function transform(pt, center, scale, rot, res, invert)
+    -- This function is from original hourglass repo 
+    -- https://github.com/anewell/pose-hg-demo
+    -- For managing coordinate transformations between the original image space
+    -- and the heatmap
+
+    local pt_ = torch.ones(3)
+    pt_[1] = pt[1]
+    pt_[2] = pt[2]
+    local t = getTransform(center, scale, rot, res)
+    if invert then
+        t = torch.inverse(t)
+    end
+    local new_point = (t*pt_):sub(1,2):int()
+    return new_point
 end

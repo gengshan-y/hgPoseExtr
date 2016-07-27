@@ -26,7 +26,7 @@ local pool = threads.Threads(
         require 'cutorch'
 
         -- for extracting pose features --
-        require 'mod_mulThreadsExtrUtil'
+        require 'mulThreadsExtrUtil'
         require 'hdf5'
 
         -- paths --
