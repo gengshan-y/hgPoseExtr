@@ -9,6 +9,7 @@ img.lua
 util.lua
 poseExtrUtil.lua
 poseFeatExtr-yolo.ipynb
+imgCrop.ipynb
 
 # others
 .ipynb_checkpoints/
