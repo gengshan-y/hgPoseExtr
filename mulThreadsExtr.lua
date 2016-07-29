@@ -42,8 +42,7 @@ local pool = threads.Threads(
     function(threadid)
         -- get data
         detList = readDectionList(inputFilePath, {tonumber(args[1]),
-                                                 args[2] * args[3]},
-                                  false)
+                                                 args[2] * args[3]}, false)
         -- open output file
         os.execute('rm ' .. outputFilePath)
         outFile = hdf5.open(outputFilePath, 'a')
