@@ -105,6 +105,7 @@ function dumpResult(batch_size)
 end
 
 function getPreds(hms, center, scale)
+    center = {center[2], center[1]}  -- to correct the x,y coord
     -- This function is from original hourglass repo 
     -- https://github.com/anewell/pose-hg-demo
     if hms:size():size() == 3 then hms = hms:view(1, hms:size(1), hms:size(2), hms:size(3)) end
