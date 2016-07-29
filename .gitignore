@@ -8,7 +8,7 @@ condor/
 img.lua
 util.lua
 poseExtrUtil.lua
-*.ipynb
+poseFeatExtr-yolo.ipynb
 
 # others
 .ipynb_checkpoints/
