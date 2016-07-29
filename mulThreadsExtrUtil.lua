@@ -91,7 +91,7 @@ function getPred(batch_size)
     timer2:reset()
     for it = 1, batch_size do
         -- get predicted joints positions in cropped and original imgs --
-        preds_hm[it],_ = getPreds(hmCPU[it], centerList[it], scaleList[it])
+        preds_hm[it],preds_img = getPreds(hmCPU[it], centerList[it], scaleList[it])
     end
     locLap[9] = locLap[9] + timer2:time().real
 end
@@ -99,7 +99,8 @@ end
 function dumpResult(batch_size)
     batch_size = batch_size or batchSize  -- default param is batchSize
     for it = 1, batch_size do
-        outFile:write(string.sub(imgList[it], 24, -5), preds_hm[it])
+        outFile:write(string.sub(imgList[it], 24, -5), preds_img)
+                    --   torch.cat(preds_hm[it], preds_img[it], 1))
     end
 end
 

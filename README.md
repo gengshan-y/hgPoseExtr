@@ -20,5 +20,5 @@ Cpu machines crop the images, and GPU machines run neural networks.
 Garbage-free. Constant usage of 1% memory.
 
 ### Speed
-~18.5fps on Tesla 40[2 devs], batch_size=10
+~42fps on Tesla 40[2 devs], batch_size=10
 ~80fps on Titan x[4 devs], batch_size=5

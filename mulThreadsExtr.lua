@@ -6,16 +6,33 @@
  -                  perison detection results
  --]]
 
+--[[ Parse arguments 
+  ]]--
+cmd = torch.CmdLine()
+cmd:text()
+cmd:text('Extracting pose features from objection detection results')
+cmd:text()
+cmd:text('Options')
+cmd:option('-initpos', 1, 'initial sample pointer from 1 to 2.8m')
+cmd:option('-batchsize', 5, 'number of samples in a batch, ~3G memory for 5')
+cmd:option('-iter', 100, 'number of batches to run')
+cmd:option('-outname', 'default', 'name of the outpuf file')
+cmd:option('-gpunum', 1, 'number of GPU device to use')
+cmd:option('-gpuoffset', 0, 'to control the offset of GPU device index')
+cmd:text()
+local args = cmd:parse(arg)  -- mark local to pass into threads
+
+--[[ Initialization
+  ]]--
 local threads = require 'threads'
-threads.Threads.serialization('threads.sharedserialize')  -- so that can change global values
-local args = arg  -- to pass into threads
-local ngpu = tonumber(args[5])
+-- 'shared serialize' to change global values
+threads.Threads.serialization('threads.sharedserialize')
 local currPointer = torch.IntTensor(1): -- point to current data
-                    fill(tonumber(args[1]))  -- tensor is sharable
+                    fill(args['initpos'])  -- tensor is sharable
 local lap = torch.FloatTensor(10):fill(0)  -- to record the time lapse
 
 local pool = threads.Threads(
-    ngpu,
+    args['gpunum'],
     function(threadid)
         print('starting a new thread# ' .. threadid)
         -- necessary dl modules --
@@ -30,26 +47,26 @@ local pool = threads.Threads(
         require 'hdf5'
 
         -- paths --
-        batchSize = args[2]
+        batchSize = args['batchsize']
         print('batchSize=' .. batchSize)
         modelPath = 'umich-stacked-hourglass.t7'
         inputFilePath = '/home/gengshan/workJul/darknet/results/'..
                         'comp4_det_test_person.txt'
         outputFilePath = '/data/gengshan/pose/' ..
-                         args[4] .. threadid ..'.h5'
+                         args['outname'] .. threadid ..'.h5'
         print('outfile=' .. outputFilePath)
     end,
     function(threadid)
         -- get data
-        detList = readDectionList(inputFilePath, {tonumber(args[1]),
-                                                 args[2] * args[3]}, false)
+        detList = readDectionList(inputFilePath, {args['initpos'],
+                                 args['batchsize'] * args['iter']}, false)
         -- open output file
         os.execute('rm ' .. outputFilePath)
         outFile = hdf5.open(outputFilePath, 'a')
  
         -- init models
-        cutorch.setDevice(threadid + args[6])
-        print('dev=' .. threadid + args[6])
+        cutorch.setDevice(threadid + args['gpuoffset'])
+        print('dev=' .. threadid + args['gpuoffset'])
         m = torch.load(modelPath)
         
         -- init input buffer
@@ -63,10 +80,11 @@ local pool = threads.Threads(
         outGPU = torch.CudaTensor():resize(batchSize, 16, 64, 64)
         hmCPU = torch.FloatTensor():resize(batchSize, 16, 64, 64)
         preds_hm = {}
+        preds_img = {}
 
         -- other vars visible to thread, to avoid garbage
         currPointerLoc = 1
-        begLoc = tonumber(args[1])  -- to recover indexing for getBatch()
+        begLoc = args['initpos']  -- to recover indexing for getBatch()
         timer1 = torch.Timer()  -- for timing in this file
         timer2 = torch.Timer()  -- for timing in Util file
         locLap = torch.FloatTensor(10)  -- syncronize with global lap
@@ -79,8 +97,8 @@ collectgarbage()
 collectgarbage()
 local jobdone = 0
 local beg = tonumber(os.date"%s")
-print('jobs= ' .. args[3])
-for it = 1, args[3] do
+print('jobs= ' .. args['iter'])
+for it = 1, args['iter'] do
     pool:addjob(
         function()
             currPointerLoc = currPointer[1]  -- so that funcs in another file can see
@@ -122,7 +140,7 @@ end
 
 
 pool:specific(true)
-for it = 1, ngpu do
+for it = 1, args['gpunum'] do
     pool:addjob(
         it,
         function()
