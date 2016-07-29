@@ -1,6 +1,9 @@
 # hgPoseExtr
 Modified hourglass. Extract pose estimations from persion detection results.
 
+I think you should use an
+`<addr>` element here instead.
+
 To crop images using detection results, run:
 
 python imgCrop.py batch_size 0-based_taskid
