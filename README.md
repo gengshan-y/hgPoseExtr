@@ -25,3 +25,6 @@ Garbage-free. Constant usage of 1% memory.
 
 ### Merge h5 files
 Use mergeH5.ipynb to merge .h5 files created by different threads.
+
+### Visualize generated pose features
+Use featVisualize.ipynb to generate pose-embedded videos.
