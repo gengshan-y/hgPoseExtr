@@ -3,15 +3,15 @@ Modified hourglass. Extract pose estimations from persion detection results.
 
 * To crop images using detection results, run
 
-`<python imgCrop.py batch_size 0-based_taskid>` e.g.: `<python imgCrop.py 10000 0>`
+`python imgCrop.py batch_size 0-based_taskid` e.g.: `python imgCrop.py 10000 0`
 
 * To run hourglss model on GPU, run
 
-`<th mulThreadsExtr.lua [options]>` e.g.:  `<th mulThreadsExtr.lua -iter 200 -outname hg_img -GPU_num 2>`
+`th mulThreadsExtr.lua [options]` e.g.:  `th mulThreadsExtr.lua -iter 200 -outname hg_img -GPU_num 2`
 
 To check the options, run
 
-`<th mulThreadsExtr.lua -help>`
+`th mulThreadsExtr.lua -help`
 
 ## Notes
 Cpu machines crop the images, and GPU machines run neural networks.
