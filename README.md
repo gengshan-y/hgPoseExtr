@@ -16,6 +16,11 @@ To check the options, run
 
 `th mulThreadsExtr.lua -help`
 
+## About notebooks
+* imgCrop.ipynb is the experimental version of imgCrop.py, but used the same method.
+* poseFeatExtr-yolo.ipynb is the experimental version for pose estimation (single-threaded).
+* img.lua, util.lua and poseExtrUtil.lua are only used by poseFeatExtr-yolo.ipynb
+
 ## Notes
 Cpu machines crop the images, and GPU machines run neural networks.
 
